@@ -1,4 +1,5 @@
-﻿#[string]::join("`t", (0..3,15,17 | % {$fields[$_]}))
+﻿#Additonal references
+#[string]::join("`t", (0..3,15,17 | % {$fields[$_]}))
 
 #composite formatting
 #https://docs.microsoft.com/en-us/dotnet/standard/base-types/composite-formatting
@@ -19,19 +20,24 @@
     [string]$d,
     [String[]]$t = ('.avi', '.mp4', '.wmv', '.flv', '.mov', '.m4v', '.f4v', '.mkv'),
     [string]$sort,
-		[switch]$wrap, 
-		[switch]$help,
-		[switch]$r
+	[switch]$wrap, 
+	[switch]$help,
+	[switch]$r,
+	[String[]]$filter
  )
 
  function Get-Help-Message{
 	write-host("`nSYNTAX")
-	write-host("  " + "Get-MeanBitrate [[-d]<string>] [[-t]<string[]=('.avi', '.mp4', '.wmv', '.flv', '.mov', '.m4v')>] [[-r]<switch>] [-sort<string[]=('size', 'vbr', 'abr', 'width', 'duration', 'path', 'parent', 'ratio', 'count')>]")
+	write-host("  " + 
+		"Get-MeanBitrate [[-d]<string>] [[-t]<string[]=('.avi', '.mp4', '.wmv', '.flv', '.mov', '.m4v')>]`n" + 
+		"[[-r]<switch>] [-sort<string[]=('size', 'vbr', 'abr', 'width', 'duration', 'path', 'parent', 'ratio', 'count')>]`n" + 
+		"[[-filter]<string>] [<string[]=('table_attribute1:min_value1', 'table_attribute2:min_value2', ...)>]")
 	write-host("`nDESCRIPTION")
 	write-host("  " + "{0,-15} {1}" -f "-d", "Specify directrory to containing media files.")
 	write-host("  " + "{0,-15} {1}" -f "-t", "Specify media file types.")
 	write-host("  " + "{0,-15} {1}" -f "-maxBitrate", "Set maximum bitrate, all avg bitrate larger than the set value will be reported.")
 	write-host("  " + "{0,-15} {1}" -f "-r", "Search directory recursively for files.")
+	write-host("  " + "{0,-15} {1}" -f "-filter", "applies additive filter to output. The filter is defined in a string tuple as shown in the syntax.")
 }
 
 $Missing_Filetype_Error = New-Object System.FormatException "-t (file type) is missing!"
@@ -184,12 +190,51 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 				$row["ratio"] = [math]::Round(($row["size"]/$row["duration"]), 2)
 			}
 			
-			$table.Rows.Add($row)
-			
+			if (Row-Matches-Criteria($row)){
+				$table.Rows.Add($row)
+			}
+
 			$i = $i +1
 			$progress = [math]::Round(($i/$folders.count)*100)
 		}	
+	}else{
+		Write-Progress -Activity "Search folder" -Status "$progress% Complete:" -PercentComplete $progress
+		$folder = Get-Item -literalPath $folderPath
+		$values = Get-MeanAttributeResults $folder.Fullname
+		$row = $table.NewRow()
+		$size = Get-ChildItem -literalpath $folder.fullname -r | Measure-Object -property length -sum
+		$row["size"] = [math]::Round($size.sum / "1MB")
+		$row["vbr"] = $values.TotalBitrate 
+		$row["abr"] = $values.AudioBitrate 
+		$row["width"] = $values.FrameWidth 
+		$row["duration"] = $values.Duration 
+		$row["path"] = $folder.Name
+		$row["parent"] = ""
+		$row["count"] = @(Get-ChildItem -literalPath $folder.Fullname -recurse | Where-Extension $t).count
+		if($row["duration"] -eq 0){
+			$row["ratio"] = 0
+		}else{
+			$row["ratio"] = [math]::Round(($row["size"]/$row["duration"]), 2)
+		}
+		
+		if (Row-Matches-Criteria($row)){
+			$table.Rows.Add($row)
+		}
 	}
+}
+
+function Row-Matches-Criteria([System.Object] $row){
+	$output = $true
+	foreach($f in $filter){
+		$attr = $f.split(":")[0]
+		$val = $f.split(":")[1]
+		
+		if ($row[$attr]){
+			$output = ($row[$attr] -ge $val) -and $output
+			# Write-Host "Testing for $attr :" $row[$attr] " > $val : " $output " real out: " ($row[$attr] -ge $val)
+		}
+	}
+	return $output
 }
 
 function AdjustConsoleWidthToTableOutput([System.Data.DataTable]$table){
