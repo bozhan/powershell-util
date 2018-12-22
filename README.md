@@ -1,7 +1,7 @@
 # powershell-util
 Various powershell utility functions and scripts used in other poweshell project.
 
-#Get-MediaInfo
+# Get-MediaInfo
 Reports a summary of the video files in each folder found in the provided path.
 Recurse switch -r could be used here if you want to report on subfolders.
 
