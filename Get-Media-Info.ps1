@@ -31,13 +31,14 @@
 	write-host("  " + 
 		"Get-MeanBitrate [[-d]<string>] [[-t]<string[]=('.avi', '.mp4', '.wmv', '.flv', '.mov', '.m4v')>]`n" + 
 		"[[-r]<switch>] [-sort<string[]=('size', 'vbr', 'abr', 'width', 'duration', 'path', 'parent', 'ratio', 'count')>]`n" + 
-		"[[-filter]<string>] [<string[]=('table_attribute1:min_value1', 'table_attribute2:min_value2', ...)>]")
+		"[[-filter]<string>] [<string[]=('table_attribute1>min_value1', 'table_attribute2=min_value2', ...)>]")
 	write-host("`nDESCRIPTION")
 	write-host("  " + "{0,-15} {1}" -f "-d", "Specify directrory to containing media files.")
 	write-host("  " + "{0,-15} {1}" -f "-t", "Specify media file types.")
 	write-host("  " + "{0,-15} {1}" -f "-maxBitrate", "Set maximum bitrate, all avg bitrate larger than the set value will be reported.")
 	write-host("  " + "{0,-15} {1}" -f "-r", "Search directory recursively for files.")
-	write-host("  " + "{0,-15} {1}" -f "-filter", "applies additive filter to output. The filter is defined in a string tuple as shown in the syntax.")
+	write-host("  " + "{0,-15} {1}" -f "-filter", "applies additive filter to output. The filter is defined in a string tuple as shown in the syntax.`n" +
+		"use one of the compareson operators between attribute and values provided (>, <, =, <=, >=")
 }
 
 $Missing_Filetype_Error = New-Object System.FormatException "-t (file type) is missing!"
@@ -190,7 +191,7 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 				$row["ratio"] = [math]::Round(($row["size"]/$row["duration"]), 2)
 			}
 			
-			if (Row-Matches-Criteria($row)){
+			if (RowMatchesFilterCriteria($row)){
 				$table.Rows.Add($row)
 			}
 
@@ -217,26 +218,44 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 			$row["ratio"] = [math]::Round(($row["size"]/$row["duration"]), 2)
 		}
 		
-		if (Row-Matches-Criteria($row)){
+		if (RowMatchesFilterCriteria($row)){
 			$table.Rows.Add($row)
 		}
 	}
 }
 
-function Row-Matches-Criteria([System.Object] $row){
+function RowMatchesFilterCriteria([System.Object] $row){
 	$output = $true
+	$ops = ("<=",">=","<",">","=")
+	
 	foreach($f in $filter){
-		$attr = $f.split(":")[0]
-		$val = $f.split(":")[1]
+		foreach($op in $ops){
+			if($f.Contains($op)){
+				$splitOp = $op
+				break
+			}
+		}
+
+		$attr = $f.split($splitOp)[0].trim()
+		$val = $f.split($splitOp)[1].trim()
 		
 		if ($row[$attr]){
-			$output = ($row[$attr] -ge $val) -and $output
-			# Write-Host "Testing for $attr :" $row[$attr] " > $val : " $output " real out: " ($row[$attr] -ge $val)
+			$output = (IsLogicalConditionMet $row[$attr] $val $splitOp) -and $output
 		}
 	}
 	return $output
 }
 
+function IsLogicalConditionMet($val1, $val2, $op){
+	switch ($op) {
+		"<=" { return ($val1 -le $val2) }
+		">=" { return ($val1 -ge $val2) }
+		"<" { return ($val1 -lt $val2) }
+		">" { return ($val1 -gt $val2) }
+		"=" { return ($val1 -eq $val2) }
+		Default {return ($val1 -eq $val2)}
+	}
+}
 function AdjustConsoleWidthToTableOutput([System.Data.DataTable]$table){
 	#getting max row path length
 	$rLen = 0
