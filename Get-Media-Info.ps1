@@ -217,7 +217,7 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 			$row["ratio"] = [math]::Round(($row["size"]/$row["duration"]), 2)
 		}
 		
-		if (RowMatchesFilterCriteria($row)){
+		if (RowMatchesFilterCriteria $row){
 			$table.Rows.Add($row)
 		}
 	}
@@ -239,20 +239,27 @@ function RowMatchesFilterCriteria([System.Object] $row){
 		$val = $f.split($splitOp)[1].trim()
 		
 		if ($row[$attr]){
-			$output = (IsLogicalConditionMet $row[$attr] $val $splitOp) -and $output
+			$foutput = (IsLogicalConditionMet $row[$attr] $val $splitOp)
+			$output = ( $foutput -and $output)
 		}
 	}
 	return $output
 }
 
 function IsLogicalConditionMet($val1, $val2, $op){
-	switch ($op) {
-		"<=" { return ($val1 -le $val2) }
-		">=" { return ($val1 -ge $val2) }
-		"<" { return ($val1 -lt $val2) }
-		">" { return ($val1 -gt $val2) }
-		"=" { return ($val1 -eq $val2) }
-		Default {return ($val1 -eq $val2)}
+	if (-not ([string]($val1 -as [int])) -and ([string]($val2 -as [int]))) {
+		return $false
+	} else {
+		$val1 = $val1 -as [double]
+		$val2 = $val2 -as [double]
+		switch ($op) {
+			"<=" { return ($val1 -le $val2) }
+			">=" { return ($val1 -ge $val2) }
+			"<" { return ($val1 -lt $val2) }
+			">" { return ($val1 -gt $val2) }
+			"=" { return ($val1 -eq $val2) }
+			Default {return ($val1 -eq $val2)}
+		}
 	}
 }
 function AdjustConsoleWidthToTableOutput([System.Data.DataTable]$table){
