@@ -45,7 +45,7 @@ $Missing_Filetype_Error = New-Object System.FormatException "-t (file type) is m
 $Missing_Folder_Error = New-Object System.FormatException "-d (source folder) is missing!"
 $NonExisting_Folder_Error = New-Object System.FormatException "-d provided folder does not exist!"
 
-filter Where-Extension {
+filter Get-Where-Extension {
 param([String[]] $extension = $t)
 	$_ | Where-Object {
 		$extension -contains $_.Extension
@@ -60,7 +60,7 @@ function Get-MeanAttributeResults([string]$folderPath){
 	$attrIdx.add("Duration", 27)
 	
 	$shellObject = New-Object -ComObject Shell.Application
-	$files = @(Get-ChildItem -literalPath $folderPath -recurse | Where-Extension $t)
+	$files = @(Get-ChildItem -literalPath $folderPath -recurse | Get-Where-Extension $t)
 	$result = @{}
 	foreach($key in $attrIdx.keys){
 		$result.add($key, 0)
@@ -68,7 +68,6 @@ function Get-MeanAttributeResults([string]$folderPath){
 	
 	if($files.count -gt 0){
 		foreach($file in $files){
-			$total = 0
 			$directoryObject = $shellObject.NameSpace($file.Directory.FullName)
 			$fileObject = $directoryObject.ParseName($file.Name)
 			foreach($key in $attrIdx.keys){
@@ -103,7 +102,7 @@ function Get-MeanAttributeResults([string]$folderPath){
 
 function Get-MeanAttributeByIndex([string]$folderPath, [int]$attrIndex){
 	$shellObject = New-Object -ComObject Shell.Application
-	$files = @(Get-ChildItem -literalPath $folderPath -recurse | Where-Extension $t)
+	$files = @(Get-ChildItem -literalPath $folderPath -recurse | Get-Where-Extension $t)
 	$total = 0
 	
 	if($files.count -gt 0){
@@ -130,7 +129,7 @@ function Get-MeanAttributeByIndex([string]$folderPath, [int]$attrIndex){
 
 function Get-MeanAttributeByName([string]$folderPath, [string]$attrName){
 	$shellObject = New-Object -ComObject Shell.Application
-	$files = @(Get-ChildItem -literalPath $folderPath -recurse | Where-Extension $t)
+	$files = @(Get-ChildItem -literalPath $folderPath -recurse | Get-Where-Extension $t)
 	$total = 0
 	
 	if($files.count -gt 0){
@@ -165,7 +164,7 @@ function Get-MeanAttributeByName([string]$folderPath, [string]$attrName){
 }
 
 function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $r, [System.Data.DataTable]$table){
-	$folders = @(Get-ChildItem -literalPath $folderPath | ?{ $_.PSIsContainer })
+	$folders = @(Get-ChildItem -literalPath $folderPath | Where-Object{ $_.PSIsContainer })
 	$progress = 0
 	
 	if($folders.count -gt 0){
@@ -183,7 +182,7 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 			$row["duration"] = $values.Duration 
 			$row["path"] = $folder.Name
 			$row["parent"] = (get-item $folder.Fullname ).parent.Name
-			$row["count"] = @(Get-ChildItem -literalPath $folder.Fullname -recurse | Where-Extension $t).count
+			$row["count"] = @(Get-ChildItem -literalPath $folder.Fullname -recurse | Get-Where-Extension $t).count
 			
 			if($row["duration"] -eq 0){
 				$row["ratio"] = 0
@@ -211,7 +210,7 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 		$row["duration"] = $values.Duration 
 		$row["path"] = $folder.Name
 		$row["parent"] = ""
-		$row["count"] = @(Get-ChildItem -literalPath $folder.Fullname -recurse | Where-Extension $t).count
+		$row["count"] = @(Get-ChildItem -literalPath $folder.Fullname -recurse | Get-Where-Extension $t).count
 		if($row["duration"] -eq 0){
 			$row["ratio"] = 0
 		}else{
@@ -319,6 +318,8 @@ function Get-MeanAttributeValues([string]$folderPath, [boolean]$recurse, [boolea
 
 if($help.ispresent){Get-Help-Message;exit}
 while(-not $d){$d = $(Read-Host 'Source Folder')}
-if(!(Test-Path $d -PathType Container)) {throw $NonExisting_Folder_Error}
+if(-not $d) {throw $Missing_Folder_Error}
+if(-not $t) {throw $Missing_Filetype_Error}
+if(-not (Test-Path $d -PathType Container)) {throw $NonExisting_Folder_Error}
 
 Get-MeanAttributeValues $d $r $wrap
