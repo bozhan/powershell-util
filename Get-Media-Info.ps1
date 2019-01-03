@@ -30,8 +30,8 @@
 	write-host("`nSYNTAX")
 	write-host("  " + 
 		"Get-MeanBitrate [[-d]<string>] [[-t]<string[]=('.avi', '.mp4', '.wmv', '.flv', '.mov', '.m4v')>]`n" + 
-		"[[-r]<switch>] [-sort<string[]=('size', 'vbr', 'abr', 'width', 'duration', 'path', 'parent', 'ratio', 'count')>]`n" + 
-		"[[-filter]<string>] [<string[]=('table_attribute1>min_value1', 'table_attribute2=min_value2', ...)>]")
+		"[[-r]<switch>] [-sort<string[]=(filter/sort attributes)>]`n" + 
+		"[[-filter]<string>] [<string[]=('filter_sort_attribute1 > min_value1', 'table_attribute2 = min_value2', ...)>]")
 	write-host("`nDESCRIPTION")
 	write-host("  " + "{0,-15} {1}" -f "-d", "Specify directrory to containing media files.")
 	write-host("  " + "{0,-15} {1}" -f "-t", "Specify media file types.")
@@ -39,6 +39,7 @@
 	write-host("  " + "{0,-15} {1}" -f "-r", "Search directory recursively for files.")
 	write-host("  " + "{0,-15} {1}" -f "-filter", "applies additive filter to output. The filter is defined in a string tuple as shown in the syntax.`n" +
 		"use one of the compareson operators between attribute and values provided (>, <, =, <=, >=")
+	write-host("  " + "{0,-15} {1}" -f "Filter and sort attributes:", "size, vbr, abr, width, duration, path, parent, ratio, count `n" +
 }
 
 $Missing_Filetype_Error = New-Object System.FormatException "-t (file type) is missing!"
