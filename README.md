@@ -1,3 +1,26 @@
+# Adding Utils to Profile
+By adding the util scripts to the powershell profile, one can access all util scripts globally by just using util.<script name>.  
+The powershell profile file can be found in C:\Users\%USERNAME%\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1  
+You can define a repo variable and add all util scripst you plan on using.  
+```
+$ps_repo_dir = "C:\Users\BoZ\dev\powershell"
+New-Alias util.Get-Media-Info $ps_repo_dir\util\Get-Media-Info.ps1
+New-Alias util.Extract-Files-From-Folders $ps_repo_dir\util\Extract-Files-From-Folders.ps1
+...
+```
+or in case you want your profile to automatically load all util scripst on startup, you can do the following  
+```
+$ps_util_path = "<PATH TO REPOSITORY>"
+$utils = @(Get-ChildItem -literalPath $ps_util_path | where {$_.extension -eq '.ps1'})
+foreach($util in $utils){
+	$utilAlias = "util." + $util.basename
+	New-Alias -Name $utilAlias -Value $util.FullName
+}
+Clear-Variable -Name "utilAlias" -Scope Global
+Clear-Variable -Name "util" -Scope Global
+Clear-Variable -Name "utils" -Scope Global
+```
+
 # powershell-util
 Various powershell utility functions and scripts used in other poweshell project.
 
