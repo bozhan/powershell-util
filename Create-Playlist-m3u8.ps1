@@ -66,22 +66,4 @@ if($help.ispresent){Get-Help-Info}
 while(-not $d){$d = $(Read-Host 'Source Folder')}
 if(!(Test-Path -literalPath $d -PathType Container)) {throw $NonExisting_Folder_Error}
 
-#get file recursively if -Recurse was provided
-# if ($recurse.IsPresent){
-# 	$files = @(Get-ChildItem -literalPath $d -recurse | Get-Files-Where-Extension $t)
-# }else{
-# 	$files = @(Get-ChildItem -literalPath $d | Get-Files-Where-Extension $t)
-# }
-
-#Encode with parameters if files with acceptable extensions are available
-# if ($files.count -gt 0){
-# 		$sizeBefore = (Get-ChildItem -literalpath $d -r | Get-Files-Where-Extension $t ) | Measure-Object -property length -sum
-# 		$sizeBefore = [math]::Round($sizeBefore.sum / "1MB")
-#     Encode-Files $files
-# 		$sizeAfter = (Get-ChildItem -literalpath $d -r | Get-Files-Where-Extension $t ) | Measure-Object -property length -sum
-# 		$sizeAfter = [math]::Round($sizeAfter.sum / "1MB")
-# 		write-host "Size reduction: " $sizeBefore " => " ($sizeAfter - $sizeBefore)
-# } else {
-# 	write-host "No files with filter: " $t " were found in " $d
-# }
 Create-Playlist $d $recurse
