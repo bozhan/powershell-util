@@ -34,7 +34,15 @@ function Get-Script-Folder-Path{
 }
 
 function Create-Playlist($folderPath, $r){
-	$files = @(Get-ChildItem -recurse -literalPath $folderPath | Get-Files-Where-Extension $t )
+	try {
+		$files = @(Get-ChildItem -recurse -literalPath $folderPath | Get-Files-Where-Extension $t )	
+	}
+	catch {
+		write-host "ERROR occurred for:" + $folderPath
+  		Write-Host $_.ScriptStackTrace
+		exit
+	}
+	
 	$folder = Get-Item $folderPath
 	$playlistPath = Join-Path $folder.FullName ($folder.BaseName + ".m3u")
 	$playlistFile = New-Item -Path $playlistPath -ItemType File -Force
