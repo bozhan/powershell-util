@@ -23,7 +23,8 @@
 	[switch]$wrap, 
 	[switch]$help,
 	[switch]$r,
-	[String[]]$filter
+	[String[]]$filter,
+	[switch]$tofile
  )
 
  function Get-Help-Message{
@@ -40,6 +41,7 @@
 	write-host("  " + "{0,-15} {1}" -f "-filter", "applies additive filter to output. The filter is defined in a string tuple as shown in the syntax.`n" +
 		"use one of the compareson operators between attribute and values provided (>, <, =, <=, >=")
 	write-host("  " + "{0,-15} {1}" -f "Filter and sort attributes:", "size, vbr, abr, width, duration, path, parent, ratio, count `n")
+	write-host("  " + "{0,-15} {1}" -f "-tofile will output the result to a file media_info.txt in the provided folder to be analyzed `n")
 }
 
 $Missing_Filetype_Error = New-Object System.FormatException "-t (file type) is missing!"
@@ -319,7 +321,7 @@ function Get-MeanAttributeValues([string]$folderPath, [boolean]$recurse, [boolea
 	if($sort){
 		$dw.Sort="$sort ASC"
 	}else{
-		$dw.Sort="path ASC"
+		$dw.Sort="ratio DESC"
 	}
 	$dw | Format-Table -Property $properties -AutoSize -Wrap:$wrapTable
 }
@@ -330,4 +332,8 @@ if(-not $d) {throw $Missing_Folder_Error}
 if(-not $t) {throw $Missing_Filetype_Error}
 if(-not (Test-Path $d -PathType Container)) {throw $NonExisting_Folder_Error}
 
-Get-MeanAttributeValues $d $r $wrap
+if($tofile.ispresent){
+	Get-MeanAttributeValues $d $r $wrap | Out-File (Join-Path $d "media_info.txt")
+}else{
+	Get-MeanAttributeValues $d $r $wrap
+}
