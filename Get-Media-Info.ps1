@@ -40,8 +40,8 @@
 	write-host("  " + "{0,-15} {1}" -f "-r", "Search directory recursively for files.")
 	write-host("  " + "{0,-15} {1}" -f "-filter", "applies additive filter to output. The filter is defined in a string tuple as shown in the syntax.`n" +
 		"use one of the compareson operators between attribute and values provided (>, <, =, <=, >=")
-	write-host("  " + "{0,-15} {1}" -f "Filter and sort attributes:", "size, vbr, abr, width, duration, path, parent, ratio, count `n")
-	write-host("  " + "{0,-15} {1}" -f "-tofile will output the result to a file media_info.txt in the provided folder to be analyzed `n")
+	write-host("  " + "{0,-15} {1}" -f "Filter and Sort attributes:", "size, vbr, abr, width, duration, path, parent, ratio, count")
+	write-host("  " + "{0,-15} {1}" -f "Output to file in provided:", "-tofile will output the result to a file media_info.txt in the provided folder to be analyzed `n")
 }
 
 $Missing_Filetype_Error = New-Object System.FormatException "-t (file type) is missing!"
