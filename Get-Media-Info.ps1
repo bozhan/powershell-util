@@ -61,7 +61,7 @@ function Get-MeanAttributeResults([string]$folderPath){
 	$attrIdx.add("AudioBitrate", 28)
 	$attrIdx.add("FrameWidth", 285)
 	$attrIdx.add("Duration", 27)
-	$attrIdx.add("FrameRate", 284)
+	# $attrIdx.add("FrameRate", 284)
 	
 	$shellObject = New-Object -ComObject Shell.Application
 	$files = @(Get-ChildItem -literalPath $folderPath -recurse | Get-Where-Extension $t)
@@ -183,7 +183,7 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 			$row["vbr"] = $values.TotalBitrate 
 			$row["abr"] = $values.AudioBitrate 
 			$row["width"] = $values.FrameWidth 
-			$row["framerate"] = $values.FrameRate
+			# $row["framerate"] = $values.FrameRate
 			$row["duration"] = $values.Duration 
 			$row["path"] = $folder.Name
 			$row["parent"] = (get-item $folder.Fullname ).parent.Name
@@ -212,7 +212,7 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 		$row["vbr"] = $values.TotalBitrate 
 		$row["abr"] = $values.AudioBitrate 
 		$row["width"] = $values.FrameWidth 
-		$row["framerate"] = $values.FrameRate
+		# $row["framerate"] = $values.FrameRate
 		$row["duration"] = $values.Duration 
 		$row["path"] = $folder.Name
 		$row["parent"] = ""
@@ -298,7 +298,7 @@ function Get-MeanAttributeValues([string]$folderPath, [boolean]$recurse, [boolea
 	$table.Columns.Add("vbr","int32") | Out-Null
 	$table.Columns.Add("abr","int32") | Out-Null
 	$table.Columns.Add("width","int32") | Out-Null
-	$table.Columns.Add("framerate","int32") | Out-Null
+	# $table.Columns.Add("framerate","int32") | Out-Null
 	$table.Columns.Add("duration","float") | Out-Null
 	$table.Columns.add("path","string") | Out-Null
 	$table.Columns.add("parent","string") | Out-Null
@@ -315,7 +315,7 @@ function Get-MeanAttributeValues([string]$folderPath, [boolean]$recurse, [boolea
 		@{Name="Video BR ";Expression={$_["vbr"]};Alignment='Center'}
 		@{Name="Audio BR ";Expression={$_["abr"]};Alignment='Center'}
 		@{Name="Frame Width ";Expression={$_["width"]};Alignment='Center'}
-		@{Name="Frame Rate ";Expression={$_["framerate"]};Alignment='Center'}
+		# @{Name="Frame Rate ";Expression={$_["framerate"]};Alignment='Center'}
 		@{Name="Forlder Name ";Expression={$_["path"]};Alignment='Left'}
 		@{Name="Forlder Parent ";Expression={$_["parent"]};Alignment='Left'}
 	)
