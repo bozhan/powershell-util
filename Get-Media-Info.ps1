@@ -190,13 +190,13 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 			$row["count"] = @(Get-ChildItem -literalPath $folder.Fullname -recurse | Get-Where-Extension $t).count
 			
 			if($row["duration"] -eq 0){
-				$row["ratio"] = 0
+				$row["MBPerMin"] = 0
 			}else{
-				$row["ratio"] = [math]::Round(($row["size"]/$row["duration"]), 2)
+				$row["MBPerMin"] = [math]::Round(($row["size"]/$row["duration"]), 2)
 			}
 			
 			if (RowMatchesFilterCriteria($row)){
-				$table.Rows.Add($row)
+				$table.Rows.Add($row) | Out-Null
 			}
 
 			$i = $i +1
@@ -218,13 +218,13 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 		$row["parent"] = ""
 		$row["count"] = @(Get-ChildItem -literalPath $folder.Fullname -recurse | Get-Where-Extension $t).count
 		if($row["duration"] -eq 0){
-			$row["ratio"] = 0
+			$row["MBPerMin"] = 0
 		}else{
-			$row["ratio"] = [math]::Round(($row["size"]/$row["duration"]), 2)
+			$row["MBPerMin"] = [math]::Round(($row["size"]/$row["duration"]), 2)
 		}
 		
 		if (RowMatchesFilterCriteria $row){
-			$table.Rows.Add($row)
+			$table.Rows.Add($row) | Out-Null
 		}
 	}
 }
@@ -302,20 +302,33 @@ function Get-MeanAttributeValues([string]$folderPath, [boolean]$recurse, [boolea
 	$table.Columns.Add("duration","float") | Out-Null
 	$table.Columns.add("path","string") | Out-Null
 	$table.Columns.add("parent","string") | Out-Null
-	$table.Columns.add("ratio","float") | Out-Null
+	$table.Columns.add("MBPerMin","float") | Out-Null
 	$table.Columns.add("count","int32") | Out-Null
-	
+
+	$col = $table.Columns.add("vbrMean", "float")
+	$col.Expression = "vbr / Avg(vbr)"
+	#$col.Expression = "(vbr - Min(vbr))/(Max(vbr)-Min(vbr))"
+
+	$col = $table.Columns.add("MBPerMinMean", "float")
+	$col.Expression = "MBPerMin / Avg(MBPerMin)"
+
+	$col = $table.Columns.add("ratio", "float")
+	$col.Expression = "MBPerMinMean + vbrMean"
+
 	Get-MeanAttributesValuesData $folderPath $recurse ([ref]$table)
-	
+
 	$properties = @(
-		@{Name="MB/Min ";Expression={$_["ratio"]};Alignment='Center'}
+		@{Name="Ratio ";Expression={$_["ratio"]};FormatString="F3";Alignment='Center'}
+		@{Name="MB/Min ";Expression={$_["MBPerMin"]};Alignment='Center'}
+		@{Name="MB/Min Mean ";Expression={$_["MBPerMinMean"]};FormatString="F3";Alignment='Center'}
 		@{Name="Size(MB) ";Expression={$_["size"]};Alignment='Center'}
 		@{Name="Length(Min) ";Expression={$_["duration"]};Alignment='Center'}
 		@{Name="#Files ";Expression={$_["count"]};Alignment='Center'}
+		@{Name="VBR Mean ";Expression={$_["vbrMean"]};FormatString="F3";Alignment='Center'}
 		@{Name="Video BR ";Expression={$_["vbr"]};Alignment='Center'}
 		@{Name="Audio BR ";Expression={$_["abr"]};Alignment='Center'}
 		@{Name="Frame Width ";Expression={$_["width"]};Alignment='Center'}
-		# @{Name="Frame Rate ";Expression={$_["framerate"]};Alignment='Center'}
+		@{Name="VBR Mean ";Expression={$_["vbrMean"]};FormatString="F3";Alignment='Center'}
 		@{Name="Forlder Name ";Expression={$_["path"]};Alignment='Left'}
 		@{Name="Forlder Parent ";Expression={$_["parent"]};Alignment='Left'}
 	)
