@@ -313,33 +313,37 @@ function Get-MeanAttributeValues([string]$folderPath, [boolean]$recurse, [boolea
 	$col.Expression = "MBPerMin / Avg(MBPerMin)"
 
 	$col = $table.Columns.add("ratio", "float")
-	$col.Expression = "MBPerMinMean + vbrMean"
+	# $col.Expression = "MBPerMinMean + vbrMean"
+	$col.Expression = "MBPerMin"
 
 	Get-MeanAttributesValuesData $folderPath $recurse ([ref]$table)
 
 	$properties = @(
-		@{Name="Ratio ";Expression={$_["ratio"]};FormatString="F3";Alignment='Center'}
-		@{Name="MB/Min ";Expression={$_["MBPerMin"]};Alignment='Center'}
-		@{Name="MB/Min Mean ";Expression={$_["MBPerMinMean"]};FormatString="F3";Alignment='Center'}
+		@{Name="MB/Min ";Expression={$_["ratio"]};FormatString="F3";Alignment='Center'}
+		# @{Name="MB/Min ";Expression={$_["MBPerMin"]};Alignment='Center'}
+		# @{Name="MB/Min Mean ";Expression={$_["MBPerMinMean"]};FormatString="F3";Alignment='Center'}
 		@{Name="Size(MB) ";Expression={$_["size"]};Alignment='Center'}
 		@{Name="Length(Min) ";Expression={$_["duration"]};Alignment='Center'}
 		@{Name="#Files ";Expression={$_["count"]};Alignment='Center'}
-		@{Name="VBR Mean ";Expression={$_["vbrMean"]};FormatString="F3";Alignment='Center'}
+		# @{Name="VBR Mean ";Expression={$_["vbrMean"]};FormatString="F3";Alignment='Center'}
 		@{Name="Video BR ";Expression={$_["vbr"]};Alignment='Center'}
 		@{Name="Audio BR ";Expression={$_["abr"]};Alignment='Center'}
 		@{Name="Frame Width ";Expression={$_["width"]};Alignment='Center'}
-		@{Name="VBR Mean ";Expression={$_["vbrMean"]};FormatString="F3";Alignment='Center'}
+		# @{Name="VBR Mean ";Expression={$_["vbrMean"]};FormatString="F3";Alignment='Center'}
 		@{Name="Forlder Name ";Expression={$_["path"]};Alignment='Left'}
 		@{Name="Forlder Parent ";Expression={$_["parent"]};Alignment='Left'}
 	)
 	
 	try{AdjustConsoleWidthToTableOutput $table}catch{}
+
+	# extracting first hash table property for data table to sort by
+	$defaultSortColumn = [regex]::match( ($properties.GetEnumerator() | Select -First 1).Expression , '(?<=")(.+)(?=")' ).value
 	
 	$dw = New-Object System.Data.DataView($table)
 	if($sort){
-		$dw.Sort="$sort ASC"
+		$dw.Sort="$sort DESC"
 	}else{
-		$dw.Sort="ratio DESC"
+		$dw.Sort="$defaultSortColumn DESC"
 	}
 	$dw | Format-Table -Property $properties -AutoSize -Wrap:$wrapTable
 }
