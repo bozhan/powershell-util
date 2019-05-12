@@ -20,11 +20,11 @@
     [string]$d,
     [String[]]$t = ('.avi', '.mp4', '.wmv', '.flv', '.mov', '.m4v', '.f4v', '.mkv'),
     [string]$sort,
-	[switch]$wrap, 
 	[switch]$help,
 	[switch]$r,
 	[String[]]$filter,
-	[switch]$tofile
+	[switch]$tofile,
+	[switch]$move
  )
 
  function Get-Help-Message{
@@ -36,12 +36,12 @@
 	write-host("`nDESCRIPTION")
 	write-host("  " + "{0,-15} {1}" -f "-d", "Specify directrory to containing media files.")
 	write-host("  " + "{0,-15} {1}" -f "-t", "Specify media file types.")
-	write-host("  " + "{0,-15} {1}" -f "-maxBitrate", "Set maximum bitrate, all avg bitrate larger than the set value will be reported.")
 	write-host("  " + "{0,-15} {1}" -f "-r", "Search directory recursively for files.")
 	write-host("  " + "{0,-15} {1}" -f "-filter", "applies additive filter to output. The filter is defined in a string tuple as shown in the syntax.`n" +
 		"use one of the compareson operators between attribute and values provided (>, <, =, <=, >=")
-	write-host("  " + "{0,-15} {1}" -f "Filter and Sort attributes:", "size, vbr, abr, width, duration, path, parent, ratio, count")
-	write-host("  " + "{0,-15} {1}" -f "Output to file in provided:", "-tofile will output the result to a file media_info.txt in the provided folder to be analyzed `n")
+	write-host("  " + "{0,-15} {1}" -f "Filter and Sort attributes:", "size, vbr, abr, width, duration, path, parent, ratio, count`n")
+	write-host("  " + "{0,-15} {1}" -f "-tofile", "Outputs the result to a file media_info.txt in the provided folder to be analyzed `n")
+	write-host("  " + "{0,-15} {1}" -f "-move", "Marks the folders that exceed the ratio limit set. `n")
 }
 
 $Missing_Filetype_Error = New-Object System.FormatException "-t (file type) is missing!"
@@ -167,14 +167,14 @@ function Get-MeanAttributeByName([string]$folderPath, [string]$attrName){
 	return $result
 }
 
-function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $r, [System.Data.DataTable]$table){
+function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $r, [System.Data.DataTable]$table, $filter){
 	$folders = @(Get-ChildItem -literalPath $folderPath | Where-Object{ $_.PSIsContainer })
 	$progress = 0
 	
 	if($folders.count -gt 0){
 		foreach($folder in $folders) {
 			Write-Progress -Activity "Search folders" -Status "$progress% Complete:" -PercentComplete $progress
-			if ($recurse){Get-MeanAttributesValuesData $folder.Fullname $false ([ref]$table)}	
+			if ($recurse){Get-MeanAttributesValuesData $folder.Fullname $false ([ref]$table) $filter}	
 			
 			$values = Get-MeanAttributeResults $folder.Fullname
 			$row = $table.NewRow()
@@ -195,8 +195,16 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 				$row["MBPerMin"] = [math]::Round(($row["size"]/$row["duration"]), 2)
 			}
 			
-			if (RowMatchesFilterCriteria($row)){
+			if (RowMatchesFilterCriteria $row $filter){
 				$table.Rows.Add($row) | Out-Null
+				if($move){
+					$reencodePath = (Join-Path $folder.Parent.FullName "#reencode")
+					if(!(Test-Path -Path $reencodePath)){
+						New-Item -ItemType directory -Path $reencodePath
+					}
+					$newPath = (Join-Path $reencodePath ($folder.Name))
+					Move-Item $folder.Fullname $newPath
+				}
 			}
 
 			$i = $i +1
@@ -223,13 +231,21 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 			$row["MBPerMin"] = [math]::Round(($row["size"]/$row["duration"]), 2)
 		}
 		
-		if (RowMatchesFilterCriteria $row){
+		if (RowMatchesFilterCriteria $row $filter){
 			$table.Rows.Add($row) | Out-Null
+			if($move){
+				$reencodePath = (Join-Path $folder.Parent.FullName "#reencode")
+				if(!(Test-Path -Path $reencodePath)){
+					New-Item -ItemType directory -Path $reencodePath
+				}
+				$newPath = (Join-Path $reencodePath ($folder.Name))
+				Move-Item $folder.Fullname $newPath
+			}
 		}
 	}
 }
 
-function RowMatchesFilterCriteria([System.Object] $row){
+function RowMatchesFilterCriteria([System.Object] $row, $filter){
 	$output = $true
 	$ops = ("<=",">=","<",">","=")
 	
@@ -292,7 +308,7 @@ function AdjustConsoleWidthToTableOutput([System.Data.DataTable]$table){
 	}
 }
 
-function Get-MeanAttributeValues([string]$folderPath, [boolean]$recurse, [boolean]$wrapTable){
+function Get-MeanAttributeValues([string]$folderPath, [boolean]$recurse, $filter){
 	$table = New-Object System.Data.DataTable
 	$table.Columns.Add("size","string") | Out-Null
 	$table.Columns.Add("vbr","int32") | Out-Null
@@ -313,10 +329,9 @@ function Get-MeanAttributeValues([string]$folderPath, [boolean]$recurse, [boolea
 	$col.Expression = "MBPerMin / Avg(MBPerMin)"
 
 	$col = $table.Columns.add("ratio", "float")
-	# $col.Expression = "MBPerMinMean + vbrMean"
-	$col.Expression = "MBPerMin"
+	$col.Expression = "MBPerMin"	
 
-	Get-MeanAttributesValuesData $folderPath $recurse ([ref]$table)
+	Get-MeanAttributesValuesData $folderPath $recurse ([ref]$table) $filter
 
 	$properties = @(
 		@{Name="MB/Min ";Expression={$_["ratio"]};FormatString="F3";Alignment='Center'}
@@ -345,7 +360,7 @@ function Get-MeanAttributeValues([string]$folderPath, [boolean]$recurse, [boolea
 	}else{
 		$dw.Sort="$defaultSortColumn DESC"
 	}
-	$dw | Format-Table -Property $properties -AutoSize -Wrap:$wrapTable
+	$dw | Format-Table -Property $properties -AutoSize -Wrap:$False
 }
 
 if($help.ispresent){Get-Help-Message;exit}
@@ -355,7 +370,7 @@ if(-not $t) {throw $Missing_Filetype_Error}
 if(-not (Test-Path $d -PathType Container)) {throw $NonExisting_Folder_Error}
 
 if($tofile.ispresent){
-	Get-MeanAttributeValues $d $r $wrap | Out-File (Join-Path $d "media_info.txt")
+	Get-MeanAttributeValues $d $r $filter | Out-File (Join-Path $d "media_info.txt")
 }else{
-	Get-MeanAttributeValues $d $r $wrap
+	Get-MeanAttributeValues $d $r $filter
 }
