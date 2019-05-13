@@ -55,7 +55,7 @@ param([String[]] $extension = $t)
 	}
 }
 
-function Get-MeanAttributeResults([string]$folderPath){
+function Get-MeanAttributeResults([string]$folderPath){	
 	$attrIdx = @{}
 	$attrIdx.add("TotalBitrate", 286)
 	$attrIdx.add("AudioBitrate", 28)
@@ -269,6 +269,7 @@ function RowMatchesFilterCriteria([System.Object] $row, $where){
 }
 
 function IsLogicalConditionMet($val1, $val2, $op){
+	#Write-Host "comapring $val1 $op $val2"
 	if (-not ([string]($val1 -as [int])) -and ([string]($val2 -as [int]))) {
 		return $false
 	} else {
