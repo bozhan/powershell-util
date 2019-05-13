@@ -249,7 +249,9 @@ function RowMatchesFilterCriteria([System.Object] $row, $where){
 	$output = $true
 	$ops = ("<=",">=","<",">","=")
 	
-	foreach($f in $where){
+	$conds = $where.split(",")
+
+	foreach($f in $conds){
 		foreach($op in $ops){
 			if($f.Contains($op)){
 				$splitOp = $op
@@ -262,14 +264,15 @@ function RowMatchesFilterCriteria([System.Object] $row, $where){
 		
 		if ($row[$attr]){
 			$foutput = (IsLogicalConditionMet $row[$attr] $val $splitOp)
-			$output = ( $foutput -and $output)
+			$output = ($foutput -and $output)
+			Write-Host "output $output"
 		}
 	}
 	return $output
 }
 
 function IsLogicalConditionMet($val1, $val2, $op){
-	#Write-Host "comapring $val1 $op $val2"
+	Write-Host "comapring $val1 $op $val2"
 	if (-not ([string]($val1 -as [int])) -and ([string]($val2 -as [int]))) {
 		return $false
 	} else {
