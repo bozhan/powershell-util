@@ -249,8 +249,10 @@ function RowMatchesFilterCriteria([System.Object] $row, $where){
 	$output = $true
 	$ops = ("<=",">=","<",">","=")
 	
-	$conds = $where.split(",")
-
+	if($where){
+		$conds = $where.split(",")
+	}
+	
 	foreach($f in $conds){
 		foreach($op in $ops){
 			if($f.Contains($op)){
