@@ -200,7 +200,7 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 				if($move){
 					$reencodePath = (Join-Path $folder.Parent.FullName "#reencode")
 					if(!(Test-Path -Path $reencodePath)){
-						New-Item -ItemType directory -Path $reencodePath
+						New-Item -ItemType directory -Path $reencodePath | Out-Null
 					}
 					$newPath = (Join-Path $reencodePath ($folder.Name))
 					Move-Item $folder.Fullname $newPath
@@ -236,7 +236,7 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 			if($move){
 				$reencodePath = (Join-Path $folder.Parent.FullName "#reencode")
 				if(!(Test-Path -Path $reencodePath)){
-					New-Item -ItemType directory -Path $reencodePath
+					New-Item -ItemType directory -Path $reencodePath | Out-Null
 				}
 				$newPath = (Join-Path $reencodePath ($folder.Name))
 				Move-Item $folder.Fullname $newPath
