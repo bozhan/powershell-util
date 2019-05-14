@@ -197,7 +197,7 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 			
 			if (RowMatchesFilterCriteria $row $where){
 				$table.Rows.Add($row) | Out-Null
-				if($move){
+				if($move -and ($folder.Name -ne "#reencode")){
 					$reencodePath = (Join-Path $folder.Parent.FullName "#reencode")
 					if(!(Test-Path -Path $reencodePath)){
 						New-Item -ItemType directory -Path $reencodePath | Out-Null
@@ -233,7 +233,7 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 		
 		if (RowMatchesFilterCriteria $row $where){
 			$table.Rows.Add($row) | Out-Null
-			if($move){
+			if($move -and ($folder.Name -ne "#reencode")){
 				$reencodePath = (Join-Path $folder.Parent.FullName "#reencode")
 				if(!(Test-Path -Path $reencodePath)){
 					New-Item -ItemType directory -Path $reencodePath | Out-Null
