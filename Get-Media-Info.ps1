@@ -185,8 +185,9 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 			$row["width"] = $values.FrameWidth 
 			# $row["framerate"] = $values.FrameRate
 			$row["duration"] = $values.Duration 
-			$row["path"] = $folder.Name
-			$row["parent"] = (get-item $folder.Fullname ).parent.Name
+			$row["name"] = $folder.Name
+			$row["parent"] = (get-item $folder.Fullname).parent.Name
+			$row["path"] = $folder.Fullname
 			$row["count"] = @(Get-ChildItem -literalPath $folder.Fullname -recurse | Get-Where-Extension $t).count
 			
 			if($row["duration"] -eq 0){
@@ -222,8 +223,9 @@ function Get-MeanAttributesValuesData([string]$folderPath, [boolean]$recurse = $
 		$row["width"] = $values.FrameWidth 
 		# $row["framerate"] = $values.FrameRate
 		$row["duration"] = $values.Duration 
-		$row["path"] = $folder.Name
+		$row["name"] = $folder.Name
 		$row["parent"] = ""
+		$row["path"] = $folder.Fullname
 		$row["count"] = @(Get-ChildItem -literalPath $folder.Fullname -recurse | Get-Where-Extension $t).count
 		if($row["duration"] -eq 0){
 			$row["MBPerMin"] = 0
@@ -321,10 +323,11 @@ function Get-MeanAttributeValues([string]$folderPath, [boolean]$recurse, $where)
 	$table.Columns.Add("width","int32") | Out-Null
 	# $table.Columns.Add("framerate","int32") | Out-Null
 	$table.Columns.Add("duration","float") | Out-Null
-	$table.Columns.add("path","string") | Out-Null
+	$table.Columns.add("name","string") | Out-Null
 	$table.Columns.add("parent","string") | Out-Null
 	$table.Columns.add("MBPerMin","float") | Out-Null
 	$table.Columns.add("count","int32") | Out-Null
+	$table.Columns.add("path","string") | Out-Null
 
 	$col = $table.Columns.add("vbrMean", "float")
 	$col.Expression = "vbr / Avg(vbr)"
@@ -350,8 +353,9 @@ function Get-MeanAttributeValues([string]$folderPath, [boolean]$recurse, $where)
 		@{Name="Audio BR ";Expression={$_["abr"]};Alignment='Center'}
 		@{Name="Frame Width ";Expression={$_["width"]};Alignment='Center'}
 		# @{Name="VBR Mean ";Expression={$_["vbrMean"]};FormatString="F3";Alignment='Center'}
-		@{Name="Forlder Name ";Expression={$_["path"]};Alignment='Left'}
+		@{Name="Forlder Name ";Expression={$_["name"]};Alignment='Left'}
 		@{Name="Forlder Parent ";Expression={$_["parent"]};Alignment='Left'}
+		@{Name="Path ";Expression={$_["path"]};Alignment='Left'}
 	)
 	
 	try{AdjustConsoleWidthToTableOutput $table}catch{}
